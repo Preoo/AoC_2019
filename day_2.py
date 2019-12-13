@@ -34,7 +34,7 @@ def run(instructions, starting_pos=0, jmp_width=4):
         try:
             (op, param1, param2, ret) = stack[ip:ip+jmp_width]
         except ValueError:
-            print(f'Reached end of stack, terminating.')
+            #print(f'Reached end of stack, terminating.')
             break
 
     return stack
