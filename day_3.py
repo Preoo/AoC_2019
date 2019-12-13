@@ -31,6 +31,17 @@ class Panel:
         distances.sort()
         return distances[0]
 
+    def get_least_steps_to_intersection(self, q=origin):
+
+        results = []
+        intersections = self.get_intersections()
+        for intersection in intersections:
+            wire_lengths = [wire.find(intersection) for wire in self.wires]
+            results.append(sum(wire_lengths))
+
+        results.sort()
+        return results[0]
+
 class Wire:
 
     def __init__(self, name):
@@ -81,6 +92,9 @@ class Wire:
         x, y = pos
         return (x + steps, y)
 
+    def find(self, intersection):
+        return self.steps.index(intersection)
+
 def manhattan_distance(p, q):
     assert len(p) == len(q)
     d_1 = [abs(p_n - q_n) for p_n, q_n in zip(p,q)]
@@ -102,4 +116,9 @@ if __name__ == "__main__":
     puzzles_input = get_wires_from_input()
     print(f'Parsed {len(puzzles_input)} wires from input.')
     panel = Panel(coils=puzzles_input)
+    
+    #Part 1
     print(f'Manhattan dist to closests insection point from origin: {panel.get_closest_intersection_to_point()}')
+    
+    #Part 2
+    print(f'What is the fewest combined steps the wires must take to reach an intersection? Answer: {panel.get_least_steps_to_intersection()}')

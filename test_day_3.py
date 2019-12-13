@@ -67,5 +67,25 @@ class Day3_TestCase(unittest.TestCase):
         closest = panel.get_closest_intersection_to_point()
         self.assertEqual(expected, closest)
 
+    def test_WireLeastSteps_1(self):
+        from day_3 import Panel, Wire
+        wire0 = [x for x in "R75,D30,R83,U83,L12,D49,R71,U7,L72".split(',')]
+        wire1 = [x for x in "U62,R66,U55,R34,D71,R55,D58,R83".split(',')]
+        expected = 610
+
+        panel = Panel(coils={'wire0' : wire0, 'wire1' : wire1})
+        least_steps = panel.get_least_steps_to_intersection()
+        self.assertEqual(expected, least_steps)
+
+    def test_WireLeastSteps_2(self):
+        from day_3 import Panel, Wire
+        wire0 = [x for x in "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51".split(',')]
+        wire1 = [x for x in "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7".split(',')]
+        expected = 410
+
+        panel = Panel(coils={'wire0' : wire0, 'wire1' : wire1})
+        least_steps = panel.get_least_steps_to_intersection()
+        self.assertEqual(expected, least_steps)
+        
 if __name__ == "__main__":
     unittest.main()
