@@ -23,8 +23,8 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
     ip = starting_pos
 
     #IO queues
-    if 'inputs' in kwargs:
-        input_deque = deque(kwargs['inputs'])
+    
+    input_deque = deque(kwargs.get('inputs', []))
     output = kwargs.get('outputs', [])
 
     def _parse_op_modes(instruction):
@@ -60,6 +60,9 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
 
         return op, param1mode, param2mode, param3mode
 
+    def _parse_params_with_mode(ip, mode):
+        return stack[ip] if mode == OpMode.IMMEDIATE else stack[stack[ip]]
+
     while True:
         op, param1mode, param2mode, param3mode = _parse_op_modes(stack[ip])
         ip += 1
@@ -68,8 +71,8 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
             break
 
         elif op == OpCode.ADD:
-            param1 = stack[ip] if param1mode == OpMode.IMMEDIATE else stack[stack[ip]]
-            param2 = stack[ip+1] if param2mode == OpMode.IMMEDIATE else stack[stack[ip+1]]
+            param1 = _parse_params_with_mode(ip, param1mode)
+            param2 = _parse_params_with_mode(ip+1, param2mode)
 
             assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
             
@@ -80,8 +83,8 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
             ip += 3
 
         elif op == OpCode.MUL:
-            param1 = stack[ip] if param1mode == OpMode.IMMEDIATE else stack[stack[ip]]
-            param2 = stack[ip+1] if param2mode == OpMode.IMMEDIATE else stack[stack[ip+1]]
+            param1 = _parse_params_with_mode(ip, param1mode)
+            param2 = _parse_params_with_mode(ip+1, param2mode)
 
             assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
             
@@ -105,8 +108,8 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
             ip += 1
 
         elif op == OpCode.JMP_IF:
-            param1 = stack[ip] if param1mode == OpMode.IMMEDIATE else stack[stack[ip]]
-            param2 = stack[ip+1] if param2mode == OpMode.IMMEDIATE else stack[stack[ip+1]]
+            param1 = _parse_params_with_mode(ip, param1mode)
+            param2 = _parse_params_with_mode(ip+1, param2mode)
     
             if param1 != 0:
                 ip = param2
@@ -114,8 +117,8 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
                 ip += 2
 
         elif op == OpCode.JMP_ELSE:
-            param1 = stack[ip] if param1mode == OpMode.IMMEDIATE else stack[stack[ip]]
-            param2 = stack[ip+1] if param2mode == OpMode.IMMEDIATE else stack[stack[ip+1]]
+            param1 = _parse_params_with_mode(ip, param1mode)
+            param2 = _parse_params_with_mode(ip+1, param2mode)
 
             if param1 == 0:
                 ip = param2
@@ -123,8 +126,8 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
                 ip += 2
 
         elif op == OpCode.LE:
-            param1 = stack[ip] if param1mode == OpMode.IMMEDIATE else stack[stack[ip]]
-            param2 = stack[ip+1] if param2mode == OpMode.IMMEDIATE else stack[stack[ip+1]]
+            param1 = _parse_params_with_mode(ip, param1mode)
+            param2 = _parse_params_with_mode(ip+1, param2mode)
 
             assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
             
@@ -138,8 +141,8 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
             ip += 3
 
         elif op == OpCode.EQ:
-            param1 = stack[ip] if param1mode == OpMode.IMMEDIATE else stack[stack[ip]]
-            param2 = stack[ip+1] if param2mode == OpMode.IMMEDIATE else stack[stack[ip+1]]
+            param1 = _parse_params_with_mode(ip, param1mode)
+            param2 = _parse_params_with_mode(ip+1, param2mode)
 
             assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
             
@@ -175,7 +178,7 @@ Todo:
     +Add tests to JMP and COMP instructions
     +TASK 2 COMPLETE
 
-    ?Refactor from single method to a class based design
+    ?This needs to be turned into a class and IO has to be done using generators and yields for day7part2
 """
 if __name__ == "__main__":
     
