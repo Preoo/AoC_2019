@@ -16,18 +16,30 @@ class OpMode(IntEnum):
     POSITION = 0
     IMMEDIATE = 1
 
-""" A single function should suffice for these tasks, this could have been better served as a class thought. """
-def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
+class IntCodeMachine:
 
-    stack = instructions
-    ip = starting_pos
+    def __init__(self, program, io_in=None, io_out=None):
 
-    #IO queues
-    
-    input_deque = deque(kwargs.get('inputs', []))
-    output = kwargs.get('outputs', [])
+        self.stack = program
+        self.ip = 0
+        self.halted = False
 
-    def _parse_op_modes(instruction):
+        self.io_i = io_in if io_in is not None else deque()
+        self.io_o = io_out if io_out is not None else deque()
+
+    def set_input_source(self, new_input):
+        self.io_i = new_input
+
+    def feed_inputs(self, inputs):
+        self.io_i.extend(inputs)
+
+    def out(self):
+        self.io_o.popleft()
+
+    def out_latest(self):
+        self.io_o.pop()
+
+    def _parse_op_modes(self, instruction):
         """
         ABCDE
          1002
@@ -60,106 +72,117 @@ def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
 
         return op, param1mode, param2mode, param3mode
 
-    def _parse_params_with_mode(ip, mode):
-        return stack[ip] if mode == OpMode.IMMEDIATE else stack[stack[ip]]
+    def _parse_params_with_mode(self, at, mode):
+        return self.stack[at] if mode == OpMode.IMMEDIATE else self.stack[self.stack[at]]
 
-    while True:
-        op, param1mode, param2mode, param3mode = _parse_op_modes(stack[ip])
-        ip += 1
-
-        if op == OpCode.HLT:
-            break
-
-        elif op == OpCode.ADD:
-            param1 = _parse_params_with_mode(ip, param1mode)
-            param2 = _parse_params_with_mode(ip+1, param2mode)
-
-            assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-            
-            param3 = stack[ip+2]
-
-            res = param1 + param2
-            stack[param3] = res
-            ip += 3
-
-        elif op == OpCode.MUL:
-            param1 = _parse_params_with_mode(ip, param1mode)
-            param2 = _parse_params_with_mode(ip+1, param2mode)
-
-            assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-            
-            param3 = stack[ip+2]
-            
-            res = param1 * param2
-            stack[param3] = res
-            ip += 3
-
-        elif op == OpCode.IN:
-            assert param1mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-            param1 = stack[ip]
-
-            stack[param1] = input_deque.popleft()
-            ip += 1
-
-        elif op == OpCode.OUT:
-            param1 = stack[ip] if param1mode == OpMode.IMMEDIATE else stack[stack[ip]]
-
-            output.append(param1)
-            ip += 1
-
-        elif op == OpCode.JMP_IF:
-            param1 = _parse_params_with_mode(ip, param1mode)
-            param2 = _parse_params_with_mode(ip+1, param2mode)
+    def run(self):
     
-            if param1 != 0:
-                ip = param2
-            else:
-                ip += 2
+        while not self.halted:
+            op, param1mode, param2mode, param3mode = self._parse_op_modes(self.stack[self.ip])
+            self.ip += 1
 
-        elif op == OpCode.JMP_ELSE:
-            param1 = _parse_params_with_mode(ip, param1mode)
-            param2 = _parse_params_with_mode(ip+1, param2mode)
+            if op == OpCode.HLT:
+                self.halted = True
+                break
 
-            if param1 == 0:
-                ip = param2
-            else:
-                ip += 2
+            elif op == OpCode.ADD:
+                param1 = self._parse_params_with_mode(self.ip, param1mode)
+                param2 = self._parse_params_with_mode(self.ip+1, param2mode)
 
-        elif op == OpCode.LE:
-            param1 = _parse_params_with_mode(ip, param1mode)
-            param2 = _parse_params_with_mode(ip+1, param2mode)
-
-            assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-            
-            param3 = stack[ip+2]
-
-            if param1 < param2:
-                stack[param3] = 1
-            else:
-                stack[param3] = 0
-
-            ip += 3
-
-        elif op == OpCode.EQ:
-            param1 = _parse_params_with_mode(ip, param1mode)
-            param2 = _parse_params_with_mode(ip+1, param2mode)
-
-            assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-            
-            param3 = stack[ip+2]
-
-            if param1 == param2:
-                stack[param3] = 1
-            else:
-                stack[param3] = 0
+                assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
                 
-            ip += 3
+                param3 = self.stack[self.ip+2]
 
-        else:
-            #Exception state, unknown opcode
-            raise ValueError(f'Invalid OpCode: {op}.')
+                res = param1 + param2
+                self.stack[param3] = res
+                self.ip += 3
 
-    return stack
+            elif op == OpCode.MUL:
+                param1 = self._parse_params_with_mode(self.ip, param1mode)
+                param2 = self._parse_params_with_mode(self.ip+1, param2mode)
+
+                assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                
+                param3 = self.stack[self.ip+2]
+                
+                res = param1 * param2
+                self.stack[param3] = res
+                self.ip += 3
+
+            elif op == OpCode.IN:
+                assert param1mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                param1 = self.stack[self.ip]
+
+                if not len(self.io_i):
+                    self.ip -= 1
+                    return
+                else:
+                    self.stack[param1] = self.io_i.popleft()
+                    self.ip += 1
+
+            elif op == OpCode.OUT:
+                param1 = self.stack[self.ip] if param1mode == OpMode.IMMEDIATE else self.stack[self.stack[self.ip]]
+
+                self.io_o.append(param1)
+                self.ip += 1
+                
+
+            elif op == OpCode.JMP_IF:
+                param1 = self._parse_params_with_mode(self.ip, param1mode)
+                param2 = self._parse_params_with_mode(self.ip+1, param2mode)
+        
+                if param1 != 0:
+                    self.ip = param2
+                else:
+                    self.ip += 2
+
+            elif op == OpCode.JMP_ELSE:
+                param1 = self._parse_params_with_mode(self.ip, param1mode)
+                param2 = self._parse_params_with_mode(self.ip+1, param2mode)
+
+                if param1 == 0:
+                    self.ip = param2
+                else:
+                    self.ip += 2
+
+            elif op == OpCode.LE:
+                param1 = self._parse_params_with_mode(self.ip, param1mode)
+                param2 = self._parse_params_with_mode(self.ip+1, param2mode)
+
+                assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                
+                param3 = self.stack[self.ip+2]
+
+                self.stack[param3] = int(param1 < param2)
+
+                self.ip += 3
+
+            elif op == OpCode.EQ:
+                param1 = self._parse_params_with_mode(self.ip, param1mode)
+                param2 = self._parse_params_with_mode(self.ip+1, param2mode)
+
+                assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                
+                param3 = self.stack[self.ip+2]
+
+                self.stack[param3] = int(param1 == param2)
+                    
+                self.ip += 3
+
+            else:
+                #Exception state, unknown opcode
+                raise ValueError(f'Invalid OpCode: {op}.')
+
+            yield
+
+""" A single function should suffice for these tasks, this could have been better served as a class thought. """
+def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
+    inputs = kwargs.get('inputs', [])
+    outputs = kwargs.get('outputs', [])
+    m = IntCodeMachine(instructions, io_in=deque(inputs), io_out=outputs)
+    for _ in m.run():
+        pass
+    return m.stack
 
 """
 Todo: 
@@ -178,7 +201,7 @@ Todo:
     +Add tests to JMP and COMP instructions
     +TASK 2 COMPLETE
 
-    ?This needs to be turned into a class and IO has to be done using generators and yields for day7part2
+    +This needs to be turned into a class
 """
 if __name__ == "__main__":
     
