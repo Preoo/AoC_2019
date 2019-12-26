@@ -2,26 +2,29 @@ from enum import IntEnum
 from collections import deque
 
 class OpCode(IntEnum):
-    ADD = 1
-    MUL = 2
-    IN = 3
-    OUT = 4
-    JMP_IF = 5
-    JMP_ELSE = 6
-    LE = 7
-    EQ = 8
-    HLT = 99
+    ADD = 1         #Add instruction
+    MUL = 2         #Multiple instruction
+    IN = 3          #Input instruction
+    OUT = 4         #Output instruction
+    JMP_IF = 5      #Jump to instruction pointer if true
+    JMP_ELSE = 6    #Jump to instruction pointer if false
+    LE = 7          #Return 1 if less than instruction
+    EQ = 8          #Return 1 if equal than instruction
+    IRB = 9         #Increment relative base pointer instruction
+    HLT = 99        #Halt instruction    
 
 class OpMode(IntEnum):
     POSITION = 0
     IMMEDIATE = 1
+    RELATIVE = 2
 
 class IntCodeMachine:
 
-    def __init__(self, program, io_in=None, io_out=None):
+    def __init__(self, program, io_in=None, io_out=None, memory=0):
 
-        self.stack = program
+        self.stack = program + [0] * memory
         self.ip = 0
+        self.relative_base = 0
         self.halted = False
 
         self.io_i = io_in if io_in is not None else deque()
@@ -34,10 +37,10 @@ class IntCodeMachine:
         self.io_i.extend(inputs)
 
     def out(self):
-        self.io_o.popleft()
+        return self.io_o.popleft()
 
     def out_latest(self):
-        self.io_o.pop()
+        return self.io_o.pop()
 
     def _parse_op_modes(self, instruction):
         """
@@ -73,7 +76,23 @@ class IntCodeMachine:
         return op, param1mode, param2mode, param3mode
 
     def _parse_params_with_mode(self, at, mode):
-        return self.stack[at] if mode == OpMode.IMMEDIATE else self.stack[self.stack[at]]
+        #return self.stack[at] if mode == OpMode.IMMEDIATE else self.stack[self.stack[at]]
+        if mode == OpMode.IMMEDIATE:
+            return self.stack[at]
+        elif mode == OpMode.POSITION:
+            return self.stack[self.stack[at]]
+        elif mode == OpMode.RELATIVE:
+            return self.stack[self.relative_base + self.stack[at]]
+        else:
+            raise ValueError('Unknown parameter mode {mode}. This is fatal.')
+
+    def _parse_position_with_mode(self, at, mode):
+        if mode == OpMode.POSITION:
+            val = self.stack[at]
+        else: #relative mode
+            val = self.relative_base + self.stack[at]
+        return val
+
 
     def run(self):
     
@@ -89,9 +108,8 @@ class IntCodeMachine:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
                 param2 = self._parse_params_with_mode(self.ip+1, param2mode)
 
-                assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-                
-                param3 = self.stack[self.ip+2]
+                # assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                param3 = self._parse_position_with_mode(self.ip+2, param3mode)
 
                 res = param1 + param2
                 self.stack[param3] = res
@@ -101,17 +119,18 @@ class IntCodeMachine:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
                 param2 = self._parse_params_with_mode(self.ip+1, param2mode)
 
-                assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                # assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
                 
-                param3 = self.stack[self.ip+2]
+                param3 = self._parse_position_with_mode(self.ip+2, param3mode)
                 
                 res = param1 * param2
                 self.stack[param3] = res
                 self.ip += 3
 
             elif op == OpCode.IN:
-                assert param1mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-                param1 = self.stack[self.ip]
+                # assert param1mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                #param1 = self.stack[self.ip]
+                param1 = self._parse_position_with_mode(self.ip, param1mode)
 
                 if not len(self.io_i):
                     self.ip -= 1
@@ -121,7 +140,7 @@ class IntCodeMachine:
                     self.ip += 1
 
             elif op == OpCode.OUT:
-                param1 = self.stack[self.ip] if param1mode == OpMode.IMMEDIATE else self.stack[self.stack[self.ip]]
+                param1 = self._parse_params_with_mode(self.ip, param1mode) #self.stack[self.ip] if param1mode == OpMode.IMMEDIATE else self.stack[self.stack[self.ip]]
 
                 self.io_o.append(param1)
                 self.ip += 1
@@ -149,9 +168,9 @@ class IntCodeMachine:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
                 param2 = self._parse_params_with_mode(self.ip+1, param2mode)
 
-                assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                # assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
                 
-                param3 = self.stack[self.ip+2]
+                param3 = self._parse_position_with_mode(self.ip+2, param3mode)
 
                 self.stack[param3] = int(param1 < param2)
 
@@ -161,13 +180,18 @@ class IntCodeMachine:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
                 param2 = self._parse_params_with_mode(self.ip+1, param2mode)
 
-                assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
+                # assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
                 
-                param3 = self.stack[self.ip+2]
+                param3 = self._parse_position_with_mode(self.ip+2, param3mode)
 
                 self.stack[param3] = int(param1 == param2)
                     
                 self.ip += 3
+            
+            elif op == OpCode.IRB:
+                param1 = self._parse_params_with_mode(self.ip, param1mode)
+                self.relative_base += param1
+                self.ip += 1
 
             else:
                 #Exception state, unknown opcode
