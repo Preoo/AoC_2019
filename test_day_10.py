@@ -29,21 +29,6 @@ class Day10_AsteroidObservatory_TestCase(unittest.TestCase):
             }
 
         self.assertCountEqual(set_asteroid_locations, parse_asteroidmap(_map_string))
-        
-    # def test_Orientation(self):
-    #     origin, other, pos1 = A(0,0), A(1,1), A(2,2)
-    #     neg1 = A(-1,-1)
-
-    #     self.assertTrue(pos1.has_same_direction(origin, other))
-    #     self.assertFalse(neg1.has_same_direction(origin, other))
-    #     self.assertTrue(neg1.has_same_direction(other, origin))
-
-    # def test_Colinear(self):
-    #     origin, other, pos1 = A(0,0), A(1,1), A(2,2)
-    #     neg1 = A(1,-1)
-
-    #     self.assertTrue(pos1.is_colinear_with(origin, other))
-    #     self.assertFalse(neg1.is_colinear_with(origin, other))
 
     def test_Example_1(self):
         from day_10 import find_optimal_observatory
@@ -142,6 +127,36 @@ class Day10_AsteroidObservatory_TestCase(unittest.TestCase):
         self.assertEqual(A(11,13), a)
         self.assertEqual(210, c)
         
+    def test_LaserWipeout(self):
+        from day_10 import find_optimal_observatory, evaporate_asteroid_field
+        _map = \
+        [
+        '.#..##.###...#######',
+        '##.############..##.',
+        '.#.######.########.#',
+        '.###.#######.####.#.',
+        '#####.##.#.##.###.##',
+        '..#####..#.#########',
+        '####################',
+        '#.####....###.#.#.##',
+        '##.#################',
+        '#####.##.###..####..',
+        '..######..##.#######',
+        '####.##.####...##..#',
+        '.#####..#.######.###',
+        '##...#.##########...',
+        '#.##########.#######',
+        '.####.#.###.###.#.##',
+        '....##.##.###..#####',
+        '.#.#.###########.###',
+        '#.#.#.#####.####.###',
+        '###.##.####.##.#..##'
+        ]
+        a, _ = find_optimal_observatory('\n'.join(_map))
+        evaporation_order_list = evaporate_asteroid_field('\n'.join(_map), a)
+        self.assertEqual(299, len(evaporation_order_list))
+        print(evaporation_order_list[-1])
+        print(evaporation_order_list[200 - 1])
 
 if __name__ == "__main__":
     unittest.main()
