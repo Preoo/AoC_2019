@@ -53,7 +53,8 @@ class IntCodeMachine:
         A - mode of 3rd parameter,  0 == position mode,
                                         omitted due to being a leading zero
 
-        For simplicity we just read max amount of params modes, instead of reading only modes used by operation.
+        For simplicity we just read max amount of params modes,
+        instead of reading only modes used by operation.
         """
         
         #defaults
@@ -76,7 +77,7 @@ class IntCodeMachine:
         return op, param1mode, param2mode, param3mode
 
     def _parse_params_with_mode(self, at, mode):
-        #return self.stack[at] if mode == OpMode.IMMEDIATE else self.stack[self.stack[at]]
+
         if mode == OpMode.IMMEDIATE:
             return self.stack[at]
         elif mode == OpMode.POSITION:
@@ -87,12 +88,15 @@ class IntCodeMachine:
             raise ValueError('Unknown parameter mode {mode}. This is fatal.')
 
     def _parse_position_with_mode(self, at, mode):
+        """ A stopgap solution """
         if mode == OpMode.POSITION:
             val = self.stack[at]
         else: #relative mode
             val = self.relative_base + self.stack[at]
         return val
 
+    def __iter__(self):
+        return iter(self.run())
 
     def run(self):
     
@@ -107,8 +111,6 @@ class IntCodeMachine:
             elif op == OpCode.ADD:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
                 param2 = self._parse_params_with_mode(self.ip+1, param2mode)
-
-                # assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
                 param3 = self._parse_position_with_mode(self.ip+2, param3mode)
 
                 res = param1 + param2
@@ -118,9 +120,6 @@ class IntCodeMachine:
             elif op == OpCode.MUL:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
                 param2 = self._parse_params_with_mode(self.ip+1, param2mode)
-
-                # assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-                
                 param3 = self._parse_position_with_mode(self.ip+2, param3mode)
                 
                 res = param1 * param2
@@ -128,8 +127,6 @@ class IntCodeMachine:
                 self.ip += 3
 
             elif op == OpCode.IN:
-                # assert param1mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-                #param1 = self.stack[self.ip]
                 param1 = self._parse_position_with_mode(self.ip, param1mode)
 
                 if not len(self.io_i):
@@ -140,11 +137,10 @@ class IntCodeMachine:
                     self.ip += 1
 
             elif op == OpCode.OUT:
-                param1 = self._parse_params_with_mode(self.ip, param1mode) #self.stack[self.ip] if param1mode == OpMode.IMMEDIATE else self.stack[self.stack[self.ip]]
+                param1 = self._parse_params_with_mode(self.ip, param1mode)
 
                 self.io_o.append(param1)
                 self.ip += 1
-                
 
             elif op == OpCode.JMP_IF:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
@@ -167,9 +163,6 @@ class IntCodeMachine:
             elif op == OpCode.LE:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
                 param2 = self._parse_params_with_mode(self.ip+1, param2mode)
-
-                # assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-                
                 param3 = self._parse_position_with_mode(self.ip+2, param3mode)
 
                 self.stack[param3] = int(param1 < param2)
@@ -179,9 +172,6 @@ class IntCodeMachine:
             elif op == OpCode.EQ:
                 param1 = self._parse_params_with_mode(self.ip, param1mode)
                 param2 = self._parse_params_with_mode(self.ip+1, param2mode)
-
-                # assert param3mode == OpMode.POSITION, f'Parameter for writing must be in position mode'
-                
                 param3 = self._parse_position_with_mode(self.ip+2, param3mode)
 
                 self.stack[param3] = int(param1 == param2)
@@ -194,18 +184,28 @@ class IntCodeMachine:
                 self.ip += 1
 
             else:
-                #Exception state, unknown opcode
+
                 raise ValueError(f'Invalid OpCode: {op}.')
 
             yield
 
-""" A single function should suffice for these tasks, this could have been better served as a class thought. """
+""" A method for single whole run of IntCodeMachine, preserved for backward compat reasons. """
 def run(instructions, *args, starting_pos=0, jmp_width=4, **kwargs):
     inputs = kwargs.get('inputs', [])
     outputs = kwargs.get('outputs', [])
     m = IntCodeMachine(instructions, io_in=deque(inputs), io_out=outputs)
+    
+    #Usage with controlling outerloop
+    #
+    # while True: 
+    #     try:
+    #         next(iter(m))
+    #     except:
+    #         break
+    
     for _ in m.run():
         pass
+    
     return m.stack
 
 """
@@ -245,7 +245,6 @@ if __name__ == "__main__":
     print_diagnostic_messages(1, 'air conditioner unit', io_out)
 
     # Part 2
-
     io_in = [5]
     io_out.clear()
 
