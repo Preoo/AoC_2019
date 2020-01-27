@@ -58,19 +58,46 @@ def required_ore(from_string:str, fuel:int = 1) -> int:
             amount_required = elem.amount - surplus[elem.material]
             reaction = [r for r in reactions if r.produced.material == elem.material].pop()
             times = ceil(amount_required / reaction.produced.amount)
-            pending_reactions.extend(reaction.consumed * times)
+            #pending_reactions.extend(reaction.consumed * times) # Trying to be neat costs too much performance to allocations
+            for r in reaction.consumed:
+                pending_reactions.append(Elem(r.amount * times, r.material))
             surplus[elem.material] = (times * reaction.produced.amount) - amount_required
             
     return ores
 
-def most_fuel_per_trillion_ore(conversion_process:str, lower_bound:int = 1):
-    """ Can't just divide, as overlow of ORE could be used to create more than that. """
+def most_fuel_per_trillion_ore(conversion_process:str, lower_bound:int = 1, upper_bound:int = 1000000):
+    """
+    Can't just divide, as overlow of ORE (surplus after creation of 1 FUEL) could be used to create more.
+    Therefore, we could just different amounts of target FUEL to produce and find highest value with ORE requirement <= cargo_cap...
+    Upper_bound was found by testing, it yields slighly larger values than cargo_cap
+    """
     cargo_capacity = 1000000000000
-    return cargo_capacity / 2486514
+    _low = lower_bound
+    _high = upper_bound
+    _mid = (upper_bound + lower_bound) // 2
+    guess = required_ore(conversion_process, fuel=_mid)
+    while _low <= _high:
+        if guess > cargo_capacity:
+            _high = _mid - 1
+            _mid = (_high + _low) // 2
+        elif guess < cargo_capacity:
+            _low = _mid + 1
+            _mid = (_high + _low) // 2
+        else:
+            return _mid
+        
+        guess = required_ore(conversion_process, fuel=_mid)
+
+    return _mid
 
 if __name__ == "__main__":
     puzzle_input = Path('input/day_14').read_text()
     part1_answer = required_ore(puzzle_input)
     print(f'{part1_answer=}')
-    part2_answer = most_fuel_per_trillion_ore(puzzle_input, lower_bound=part1_answer)
+    part2_answer = most_fuel_per_trillion_ore(puzzle_input, lower_bound=1)
     print(f'{part2_answer=}')
+    
+    # Correct answers:
+    #   part1_answer=2486514
+    #   part2_answer=998536
+    #               1743257
