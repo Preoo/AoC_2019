@@ -65,13 +65,12 @@ def required_ore(from_string:str, fuel:int = 1) -> int:
             
     return ores
 
-def most_fuel_per_trillion_ore(conversion_process:str, lower_bound:int = 1, upper_bound:int = 1000000):
+def get_fuel_yield_from_carge(conversion_process:str, lower_bound:int = 1, upper_bound:int = 1000000, cargo_capacity:int = 1000000000000) -> int:
     """
-    Can't just divide, as overlow of ORE (surplus after creation of 1 FUEL) could be used to create more.
-    Therefore, we could just different amounts of target FUEL to produce and find highest value with ORE requirement <= cargo_cap...
-    Upper_bound was found by testing, it yields slighly larger values than cargo_cap
+    Basic binary search to find max FUEL production for given cargo capacity.
+    Upper_bound was found by testing, it yields slighly larger values than default cargo capacity.
     """
-    cargo_capacity = 1000000000000
+    
     _low = lower_bound
     _high = upper_bound
     _mid = (upper_bound + lower_bound) // 2
@@ -94,10 +93,10 @@ if __name__ == "__main__":
     puzzle_input = Path('input/day_14').read_text()
     part1_answer = required_ore(puzzle_input)
     print(f'{part1_answer=}')
-    part2_answer = most_fuel_per_trillion_ore(puzzle_input, lower_bound=1)
+    # Set lower bound for search to be amount of ORE needed for one FUEL
+    part2_answer = get_fuel_yield_from_carge(puzzle_input, lower_bound=int(1e12 // part1_answer))
     print(f'{part2_answer=}')
     
     # Correct answers:
     #   part1_answer=2486514
     #   part2_answer=998536
-    #               1743257
