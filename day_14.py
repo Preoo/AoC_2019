@@ -56,9 +56,9 @@ def required_ore(from_string:str, fuel:int = 1) -> int:
             surplus[elem.material] -= elem.amount
         else:
             amount_required = elem.amount - surplus[elem.material]
-            reaction = [r for r in reactions if r.produced.material == elem.material].pop()
+            reaction = next(filter(lambda r: r.produced.material == elem.material, reactions))
             times = ceil(amount_required / reaction.produced.amount)
-            #pending_reactions.extend(reaction.consumed * times) # Trying to be neat costs too much performance to allocations
+            #pending_reactions.extend(reaction.consumed * times) # Trying to save lines costs too much performance to allocations
             for r in reaction.consumed:
                 pending_reactions.append(Elem(r.amount * times, r.material))
             surplus[elem.material] = (times * reaction.produced.amount) - amount_required
