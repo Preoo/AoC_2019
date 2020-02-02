@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from day_5 import IntCodeMachine
+from Shared.IntCodeMachine.machine import IntCodeMachine
 
 #os.system('cls') if windows terminal and os.system('clear') if unix term
 subprocess.run('clear')
@@ -25,9 +25,9 @@ for _ in cpu.run():
             score = val
         if val == 3: #new paddle position
             paddle_coords = (x, y)
-            print(f'Paddle pos: {paddle_coords}')
+            # print(f'Paddle pos: {paddle_coords}')
         if val == 4: #new ball position
-            print(f'Ball pos: {(x, y)}')
+            # print(f'Ball pos: {(x, y)}')
             if x < paddle_coords[0]:
                 cpu.feed_inputs([-1])
             elif x > paddle_coords[0]:

@@ -1,5 +1,5 @@
 import unittest
-from day_5 import IntCodeMachine
+from Shared.IntCodeMachine.machine import IntCodeMachine
 
 class Day9_IntCodeMachineRelativeMode_TestCase(unittest.TestCase):
 

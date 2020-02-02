@@ -1,4 +1,4 @@
-import day_5 as opcode_machine
+from Shared.IntCodeMachine import machine as opcode_machine
 from itertools import permutations
 
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     
         thruster_signals.add(outputs[0])
 
-    print(f'Max thruster signal is {max(thruster_signals)}')
+    print(f'Part 1: Max thruster signal is {max(thruster_signals)}')
 
     #Part 2
     phase_settings = set(permutations(range(5, 10)))
@@ -52,7 +52,7 @@ if __name__ == "__main__":
                 for _ in ma.run():
                     pass
                 
-        print(machines[-1].io_o)
+        # print(machines[-1].io_o)
         thruster_signals.add(machines[-1].io_o[0])
         
-    print(f'Max thruster signal is {max(thruster_signals)}')        
+    print(f'Part 2: Max thruster signal is {max(thruster_signals)}')        

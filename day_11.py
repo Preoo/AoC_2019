@@ -1,4 +1,4 @@
-from day_5 import IntCodeMachine
+from Shared.IntCodeMachine.machine import IntCodeMachine
 from collections import deque
 from collections import namedtuple
 from collections import defaultdict
