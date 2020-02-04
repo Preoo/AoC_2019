@@ -1,15 +1,6 @@
 import unittest
 
 class Day4_TestCase(unittest.TestCase):
-    # @classmethod
-    # def setUpClass(cls):
-    #     pass
-
-    # def setUp(self):
-    #     pass
-
-    # def test_Sanity(self):
-    #     self.assertTrue(1 == 1, 'failed sanity check. Fix test environment.')
 
     def test_SixDigit(self):
         from day_4 import filter_six_digits

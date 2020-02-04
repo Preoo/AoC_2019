@@ -65,8 +65,7 @@ class System:
     def total_energy_in_system(self):
         return sum((moon.get_total_energy() for moon in self.moons))
 
-if __name__ == "__main__":
-
+def main():
     io = Moon(x=-17, y=9, z=-5)
     europa = Moon(x=-1, y=7, z=13)
     ganymede = Moon(x=-19, y=12, z=5)
@@ -79,7 +78,7 @@ if __name__ == "__main__":
         pass
 
     print(f'Total energy in system after {n_ticks} ticks is {system.total_energy_in_system()}.')
-
+    part1_answer = system.total_energy_in_system()
     # Part 2
     """
     <x=-1, y=0, z=2>
@@ -103,14 +102,18 @@ if __name__ == "__main__":
 
     
     test1 = system.simulate_on_axis(0)
-    # print(test1)
     test2 = system.simulate_on_axis(1)
-    # print(test2)
     test3 = system.simulate_on_axis(2)
-    # print(test3)
-    print(test1, test2, test3)
 
     def lcm(a, b):
         return a * b // gcd(a, b)
 
     print(f'LCM: {lcm(test1, lcm(test2, test3))}')
+    part2_answer = lcm(test1, lcm(test2, test3))
+
+    # for tests
+    return part1_answer, part2_answer
+
+if __name__ == "__main__":
+
+    main()
