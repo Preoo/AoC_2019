@@ -3,9 +3,7 @@ from pathlib import Path
 from Shared.IntCodeMachine.machine import IntCodeMachine
 
 #os.system('cls') if windows terminal and os.system('clear') if unix term
-subprocess.run('clear')
-
-
+#subprocess.run('clear')
 puzzle_input = Path('input/day_13').read_text()
 ping_pong_program = [int(x) for x in puzzle_input.split(',')]
 
@@ -29,12 +27,11 @@ for _ in cpu.run():
         if val == 4: #new ball position
             # print(f'Ball pos: {(x, y)}')
             if x < paddle_coords[0]:
-                cpu.feed_inputs([-1])
+                cpu.feed_inputs(-1)
             elif x > paddle_coords[0]:
-                cpu.feed_inputs([1])
+                cpu.feed_inputs(1)
             else:
-                cpu.feed_inputs([0])
+                cpu.feed_inputs(0)
         
-
 # print(f'Block tiles count was {part_1_answer}')
 print(f'Score: {score}')

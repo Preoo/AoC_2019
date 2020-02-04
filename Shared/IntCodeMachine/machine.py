@@ -34,7 +34,14 @@ class IntCodeMachine:
         self.io_i = new_input
 
     def feed_inputs(self, inputs):
-        self.io_i.extend(inputs)
+        # convert input to iterable if needed
+        # useful when inputting a single int, no need to create new list first 
+        try:
+            input_iter = iter(inputs)
+        except TypeError:
+            input_iter = [inputs]
+        
+        self.io_i.extend(input_iter)
 
     def out(self):
         return self.io_o.popleft()
