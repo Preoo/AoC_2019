@@ -37,5 +37,11 @@ class Day16_FlawedFrequencyTransmission_TestCase(unittest.TestCase):
         expected = [int(d) for d in '52432133']
         self.assertEqual(expected, fft.FFT(sig, phases=100)[:8])
 
+    # def test_part2(self):
+    #     sig = '03036732577212944063491565474664'
+    #     offset:str = sig[:7]
+    #     res = fft.FFT(sig * 10000, phases=100)
+    #     ans = res[int(offset):int(offset) + 8]
+    #     self.assertEqual([8,4,4,6,2,0,2,6], ans)
 if __name__ == "__main__":
     unittest.main()
